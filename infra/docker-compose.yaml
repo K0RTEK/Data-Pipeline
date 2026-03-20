@@ -16,10 +16,11 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
 
   airflow-init:
     build:
-      context: airflow
+      context: ./airflow
     container_name: airflow-init
     depends_on:
       postgres:
@@ -28,6 +29,10 @@ services:
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
       AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      JAVA_HOME: /usr/lib/jvm/java-17
+      PYSPARK_PYTHON: python3
+      SPARK_LOCAL_IP: 127.0.0.1
+      PYTHONPATH: /opt/airflow
     command: >
       bash -c "
       airflow db migrate &&
@@ -39,10 +44,11 @@ services:
       --role Admin
       --email admin@example.com
       "
+    restart: "no"
 
   airflow-webserver:
     build:
-      context: airflow
+      context: ./airflow
     container_name: airflow-webserver
     depends_on:
       postgres:
@@ -53,10 +59,17 @@ services:
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
       AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      JAVA_HOME: /usr/lib/jvm/java-17
+      PYSPARK_PYTHON: python3
+      SPARK_LOCAL_IP: 127.0.0.1
+      PYTHONPATH: /opt/airflow
     volumes:
       - ./airflow/dags:/opt/airflow/dags
       - ./airflow/logs:/opt/airflow/logs
       - ./airflow/plugins:/opt/airflow/plugins
+      - ../spark:/opt/airflow/spark
+      - ../data:/opt/airflow/data
+      - ../db:/opt/airflow/db
     ports:
       - "8080:8080"
     command: webserver
@@ -64,7 +77,7 @@ services:
 
   airflow-scheduler:
     build:
-      context: airflow
+      context: ./airflow
     container_name: airflow-scheduler
     depends_on:
       postgres:
@@ -75,16 +88,23 @@ services:
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
       AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      JAVA_HOME: /usr/lib/jvm/java-17
+      PYSPARK_PYTHON: python3
+      SPARK_LOCAL_IP: 127.0.0.1
+      PYTHONPATH: /opt/airflow
     volumes:
       - ./airflow/dags:/opt/airflow/dags
       - ./airflow/logs:/opt/airflow/logs
       - ./airflow/plugins:/opt/airflow/plugins
+      - ../spark:/opt/airflow/spark
+      - ../data:/opt/airflow/data
+      - ../db:/opt/airflow/db
     command: scheduler
     restart: unless-stopped
 
   pgadmin:
     build:
-      context: pgadmin
+      context: ./pgadmin
     container_name: pgadmin
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@example.com
