@@ -1,0 +1,3 @@
+postgres:5432:airflow:airflow:airflow
+postgres:5432:raw:admin:admin
+postgres:5432:marts:admin:admin
