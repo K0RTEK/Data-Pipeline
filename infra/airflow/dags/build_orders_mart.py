@@ -1,22 +1,17 @@
 from datetime import datetime
 
 from airflow import DAG
-from airflow.providers.apache.spark.operators.spark_submit import SparkSubmitOperator
-
+from spark.common.spark_session import spark_submit_task
 
 with DAG(
-    dag_id="build_orders_mart",
-    start_date=datetime(2026, 3, 25),
-    schedule=None,
-    catchup=False,
-    tags=["spark", "marts"],
+        dag_id="build_orders_mart",
+        start_date=datetime(2026, 3, 25),
+        schedule=None,
+        catchup=False,
+        tags=["spark", "marts"],
 ) as dag:
-
-    build_orders_mart = SparkSubmitOperator(
+    build_items_mart = spark_submit_task(
         task_id="build_orders_mart",
         application="/opt/airflow/spark/jobs/build_orders_mart.py",
-        conn_id="spark_default",
-        name="build_orders_mart",
-        jars="/opt/spark/jars/postgresql.jar",
-        verbose=False,
+        dag=dag,
     )
