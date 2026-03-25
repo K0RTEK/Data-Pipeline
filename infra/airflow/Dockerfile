@@ -17,6 +17,10 @@ RUN JAVA_HOME_PATH=$(dirname $(dirname $(readlink -f $(which java)))) && \
 ENV JAVA_HOME=/usr/lib/jvm/java-17
 ENV PATH="${JAVA_HOME}/bin:${PATH}"
 
+RUN mkdir -p /opt/spark/jars && \
+    wget -O /opt/spark/jars/postgresql.jar \
+    https://jdbc.postgresql.org/download/postgresql-42.7.3.jar
+
 USER airflow
 
 RUN pip install --no-cache-dir \
@@ -26,4 +30,5 @@ RUN pip install --no-cache-dir \
     pyspark==3.5.1 \
     findspark \
     pyarrow \
-    fastparquet
+    fastparquet \
+    apache-airflow-providers-apache-spark==4.0.0
