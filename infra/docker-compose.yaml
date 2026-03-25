@@ -29,7 +29,13 @@ services:
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
       AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+
+      AIRFLOW_CONN_POSTGRES_AIRFLOW: postgresql://airflow:airflow@postgres:5432/airflow
+      AIRFLOW_CONN_POSTGRES_RAW: postgresql://admin:admin@postgres:5432/raw
+      AIRFLOW_CONN_POSTGRES_MARTS: postgresql://admin:admin@postgres:5432/marts
+
       JAVA_HOME: /usr/lib/jvm/java-17
+      SPARK_HOME: /opt/spark
       PYSPARK_PYTHON: python3
       SPARK_LOCAL_IP: 127.0.0.1
       PYTHONPATH: /opt/airflow
@@ -42,7 +48,27 @@ services:
       --firstname Admin
       --lastname User
       --role Admin
-      --email admin@example.com
+      --email admin@example.com || true &&
+    
+      airflow connections add 'postgres_raw' \
+        --conn-type 'postgres' \
+        --conn-host 'postgres' \
+        --conn-login 'admin' \
+        --conn-password 'admin' \
+        --conn-schema 'raw' \
+        --conn-port '5432' || true &&
+    
+      airflow connections add 'postgres_marts' \
+        --conn-type 'postgres' \
+        --conn-host 'postgres' \
+        --conn-login 'admin' \
+        --conn-password 'admin' \
+        --conn-schema 'marts' \
+        --conn-port '5432' || true &&
+    
+      airflow connections add 'spark_default' \
+        --conn-type 'spark' \
+        --conn-host 'local[*]' || true
       "
     restart: "no"
 
@@ -59,7 +85,15 @@ services:
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
       AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+
+      AIRFLOW_CONN_POSTGRES_AIRFLOW: postgresql://airflow:airflow@postgres:5432/airflow
+      AIRFLOW_CONN_POSTGRES_RAW: postgresql://admin:admin@postgres:5432/raw
+      AIRFLOW_CONN_POSTGRES_MARTS: postgresql://admin:admin@postgres:5432/marts
+
+      AIRFLOW_CONN_SPARK_DEFAULT: spark://local
+
       JAVA_HOME: /usr/lib/jvm/java-17
+      SPARK_HOME: /opt/spark
       PYSPARK_PYTHON: python3
       SPARK_LOCAL_IP: 127.0.0.1
       PYTHONPATH: /opt/airflow
@@ -88,7 +122,15 @@ services:
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
       AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+
+      AIRFLOW_CONN_POSTGRES_AIRFLOW: postgresql://airflow:airflow@postgres:5432/airflow
+      AIRFLOW_CONN_POSTGRES_RAW: postgresql://admin:admin@postgres:5432/raw
+      AIRFLOW_CONN_POSTGRES_MARTS: postgresql://admin:admin@postgres:5432/marts
+
+      AIRFLOW_CONN_SPARK_DEFAULT: spark://local
+
       JAVA_HOME: /usr/lib/jvm/java-17
+      SPARK_HOME: /opt/spark
       PYSPARK_PYTHON: python3
       SPARK_LOCAL_IP: 127.0.0.1
       PYTHONPATH: /opt/airflow

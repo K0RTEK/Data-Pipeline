@@ -8,6 +8,7 @@ RUN apt-get update && \
     procps \
     curl \
     wget \
+    tar \
     && apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -17,18 +18,25 @@ RUN JAVA_HOME_PATH=$(dirname $(dirname $(readlink -f $(which java)))) && \
 ENV JAVA_HOME=/usr/lib/jvm/java-17
 ENV PATH="${JAVA_HOME}/bin:${PATH}"
 
+ENV SPARK_VERSION=3.5.8
+ENV HADOOP_VERSION=3
+
+RUN wget -q https://downloads.apache.org/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}.tgz && \
+    tar -xzf spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}.tgz -C /opt && \
+    mv /opt/spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION} /opt/spark && \
+    rm spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}.tgz
+
+ENV SPARK_HOME=/opt/spark
+ENV PATH="${SPARK_HOME}/bin:${PATH}"
+
 RUN mkdir -p /opt/spark/jars && \
-    wget -O /opt/spark/jars/postgresql.jar \
+    wget -q -O /opt/spark/jars/postgresql.jar \
     https://jdbc.postgresql.org/download/postgresql-42.7.3.jar
 
 USER airflow
 
-RUN pip install --no-cache-dir \
+RUN pip install --no-cache-dir --default-timeout=300 \
     pandas \
     psycopg2-binary \
-    sqlalchemy \
-    pyspark==3.5.1 \
-    findspark \
-    pyarrow \
-    fastparquet \
+    pyspark==3.5.8 \
     apache-airflow-providers-apache-spark==4.0.0

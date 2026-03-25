@@ -1,16 +1,44 @@
 import psycopg2
 from pyspark.sql import DataFrame, SparkSession
+from airflow.operators.bash import BashOperator
 
 POSTGRES_HOST = "postgres"
 POSTGRES_PORT = 5432
 
-RAW_DB = "postgres"
-MARTS_DB = "postgres"
+RAW_DB = "raw"
+MARTS_DB = "marts"
 
-POSTGRES_USER = "postgres"
-POSTGRES_PASSWORD = "postgres"
+POSTGRES_USER = "admin"
+POSTGRES_PASSWORD = "admin"
 
 POSTGRES_DRIVER = "org.postgresql.Driver"
+
+
+def spark_submit_task(
+        task_id: str,
+        application: str,
+        dag,
+        jars: str = "/opt/spark/jars/postgresql.jar",
+        master: str = "local[*]",
+):
+    return BashOperator(
+        task_id=task_id,
+        bash_command=f"""
+        cd /opt/airflow && \
+        /opt/spark/bin/spark-submit \
+          --master {master} \
+          --jars {jars} \
+          {application}
+        """,
+        env={
+            "JAVA_HOME": "/usr/lib/jvm/java-17",
+            "SPARK_HOME": "/opt/spark",
+            "PYSPARK_PYTHON": "python3",
+            "SPARK_LOCAL_IP": "127.0.0.1",
+            "PYTHONPATH": "/opt/airflow",
+        },
+        dag=dag,
+    )
 
 
 def get_spark_session(app_name: str) -> SparkSession:

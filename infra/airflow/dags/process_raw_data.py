@@ -8,7 +8,7 @@ from airflow.operators.python import PythonOperator
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 
 RAW_PATH = "/opt/airflow/data/raw/*.parquet"
-POSTGRES_CONN_ID = "postgres_default"
+POSTGRES_CONN_ID = "postgres_raw"
 
 PARQUET_COLUMNS = [
     "user_id",
@@ -502,7 +502,7 @@ def validate_loaded_data():
 
 
 with DAG(
-    dag_id="final_DAG",
+    dag_id="process_raw_data",
     start_date=datetime(2026, 1, 1),
     schedule=None,
     catchup=False,
