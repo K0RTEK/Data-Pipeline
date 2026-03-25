@@ -4,22 +4,19 @@ from pyspark.sql import DataFrame, SparkSession
 POSTGRES_HOST = "postgres"
 POSTGRES_PORT = 5432
 
-RAW_DB = "raw"
-MARTS_DB = "marts"
+RAW_DB = "postgres"
+MARTS_DB = "postgres"
 
-POSTGRES_USER = "admin"
-POSTGRES_PASSWORD = "admin"
+POSTGRES_USER = "postgres"
+POSTGRES_PASSWORD = "postgres"
 
 POSTGRES_DRIVER = "org.postgresql.Driver"
-POSTGRES_JDBC_JAR = "/opt/spark/jars/postgresql.jar"
 
 
 def get_spark_session(app_name: str) -> SparkSession:
     spark = (
         SparkSession.builder
         .appName(app_name)
-        .master("local[1]")
-        .config("spark.jars", POSTGRES_JDBC_JAR)
         .config("spark.sql.session.timeZone", "UTC")
         .config("spark.driver.memory", "1g")
         .config("spark.executor.memory", "1g")
