@@ -18,8 +18,8 @@ def get_spark_session(app_name: str) -> SparkSession:
         SparkSession.builder
         .appName(app_name)
         .config("spark.sql.session.timeZone", "UTC")
-        .config("spark.driver.memory", "1g")
-        .config("spark.executor.memory", "1g")
+        .config("spark.driver.memory", "2g")
+        .config("spark.executor.memory", "2g")
         .config("spark.sql.shuffle.partitions", "1")
         .config("spark.default.parallelism", "1")
         .config("spark.sql.adaptive.enabled", "true")
@@ -49,6 +49,7 @@ def read_table(spark: SparkSession, database: str, table_name: str) -> DataFrame
         .option("user", POSTGRES_USER)
         .option("password", POSTGRES_PASSWORD)
         .option("driver", POSTGRES_DRIVER)
+        .option("fetchsize", "1000")
         .load()
     )
 

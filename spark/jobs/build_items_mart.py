@@ -30,6 +30,7 @@ def build_items_mart() -> None:
             "item_id",
             "item_quantity",
             "item_canceled_quantity",
+            "item_discount",
         )
         .alias("oi")
     )
@@ -63,25 +64,19 @@ def build_items_mart() -> None:
             F.to_date(F.col("o.created_at")).alias("report_date"),
             F.col("o.store_id").cast("int").alias("store_id"),
             F.col("oi.item_id").cast("int").alias("item_id"),
+            F.year(F.to_date(F.col("o.created_at"))).alias("report_year"),
+            F.month(F.to_date(F.col("o.created_at"))).alias("report_month"),
+            F.dayofmonth(F.to_date(F.col("o.created_at"))).alias("report_day"),
             F.col("o.delivery_city").alias("city"),
             F.col("s.store_name").alias("store_name"),
             F.col("i.item_category").alias("category"),
             F.col("i.item_title").alias("item"),
             F.col("o.order_id").cast("int").alias("order_id"),
             F.col("i.item_price").cast("decimal(12,2)").alias("item_price"),
+            F.coalesce(F.col("oi.item_discount"), F.lit(0)).cast("decimal(12,2)").alias("item_discount"),
             F.col("oi.item_quantity").cast("int").alias("item_quantity"),
             F.col("oi.item_canceled_quantity").cast("int").alias("item_canceled_quantity"),
         )
-        .withColumn("report_year", F.year("report_date"))
-        .withColumn("report_month", F.month("report_date"))
-        .withColumn("report_day", F.dayofmonth("report_date"))
-    )
-    
-    source_df = source_df.repartition(
-        1,
-        "report_date",
-        "store_id",
-        "item_id",
     )
 
     result_df = (
@@ -99,18 +94,25 @@ def build_items_mart() -> None:
             "item",
         )
         .agg(
-            F.sum(F.col("item_price") * F.col("item_quantity"))
-                .cast("decimal(12,2)")
-                .alias("turnover"),
+            F.sum(
+                (
+                    F.col("item_price") *
+                    (F.lit(1.0) - F.col("item_discount") / F.lit(100.0))
+                ) * F.col("item_quantity")
+            ).cast("decimal(12,2)").alias("turnover"),
+
             F.sum("item_quantity")
-                .cast("int")
-                .alias("ordered_quantity"),
+            .cast("int")
+            .alias("ordered_quantity"),
+
             F.sum("item_canceled_quantity")
-                .cast("int")
-                .alias("canceled_quantity"),
+            .cast("int")
+            .alias("canceled_quantity"),
+
             F.countDistinct("order_id")
-                .cast("int")
-                .alias("orders_with_item_count"),
+            .cast("int")
+            .alias("orders_with_item_count"),
+
             F.countDistinct(
                 F.when(F.col("item_canceled_quantity") > 0, F.col("order_id"))
             ).cast("int").alias("canceled_orders_with_item_count"),
@@ -133,8 +135,6 @@ def build_items_mart() -> None:
             "canceled_orders_with_item_count",
         )
     )
-
-    result_df = result_df.coalesce(1)
 
     write_table(result_df, MARTS_DB, "mart_items")
     spark.stop()
